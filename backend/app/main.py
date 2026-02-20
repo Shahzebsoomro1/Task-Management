@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import api_router
-from app.core.config import settings
+from app.core.config import settings, engine
+from app.db.database import Base
+from app.models.models import User, Project, Task, Comment
+import asyncio
 
 app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 
@@ -16,6 +19,13 @@ app.add_middleware(
 
 # Include routers
 app.include_router(api_router)
+
+
+@app.on_event("startup")
+async def startup():
+    """Create tables on startup."""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 
 @app.get("/health")

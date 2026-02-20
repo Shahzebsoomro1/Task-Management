@@ -22,11 +22,13 @@ __pycache__
 .Python
 .venv
 venv/
+venv_backend/
 env/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
 .tox/
+*.db
 
 # Node
 node_modules/

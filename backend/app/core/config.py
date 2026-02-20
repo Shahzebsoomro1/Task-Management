@@ -1,12 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import NullPool, StaticPool
 from pydantic_settings import BaseSettings
 from typing import Optional
 import os
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql+asyncpg://taskuser:taskpass@postgres:5432/taskmanagement"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./taskmanagement.db"
     SECRET_KEY: str = "your-secret-key-change-in-production-at-least-32-characters-long"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
@@ -24,7 +24,8 @@ settings = Settings()
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.SQLALCHEMY_ECHO,
-    poolclass=NullPool,
+    poolclass=StaticPool,
+    connect_args={"check_same_thread": False},
 )
 
 # Create async session factory
