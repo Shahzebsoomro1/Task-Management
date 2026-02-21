@@ -1,8 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 from app.db.base import BaseRepository
 from app.models.models import Project
-from typing import Optional
+from typing import Optional, Tuple, List
 
 
 class ProjectRepository(BaseRepository[Project]):
@@ -11,8 +12,32 @@ class ProjectRepository(BaseRepository[Project]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Project)
 
-    async def get_user_projects(self, user_id: any) -> list[Project]:
-        """Get all projects created by a user."""
-        statement = select(self.model).where(self.model.created_by == user_id)
+    async def get_with_tasks(self, project_id: str) -> Optional[Project]:
+        """Get a project by ID with tasks eagerly loaded."""
+        statement = (
+            select(self.model)
+            .where(self.model.id == project_id)
+            .options(selectinload(self.model.tasks))
+        )
         result = await self.db.execute(statement)
-        return result.scalars().all()
+        return result.scalar_one_or_none()
+
+    async def get_user_projects(
+        self, user_id: any, skip: int = 0, limit: int = 100
+    ) -> Tuple[List[Project], int]:
+        """Get paginated projects created by a user."""
+        base_where = self.model.created_by == user_id
+
+        count_stmt = select(func.count()).select_from(self.model).where(base_where)
+        count_result = await self.db.execute(count_stmt)
+        total = count_result.scalar_one()
+
+        statement = (
+            select(self.model)
+            .where(base_where)
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await self.db.execute(statement)
+        projects = list(result.scalars().all())
+        return projects, total

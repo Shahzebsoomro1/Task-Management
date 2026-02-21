@@ -7,7 +7,7 @@ export const authService = {
 };
 
 export const projectService = {
-  getProjects: () => api.get('/projects'),
+  getProjects: (skip = 0, limit = 6) => api.get('/projects', { params: { skip, limit } }),
   getProject: (id) => api.get(`/projects/${id}`),
   createProject: (data) => api.post('/projects', data),
   updateProject: (id, data) => api.put(`/projects/${id}`, data),

@@ -4,7 +4,6 @@ from app.schemas.schemas import UserCreate, UserResponse
 from app.core.security import get_password_hash, verify_password
 from app.models.models import User
 from fastapi import HTTPException, status
-from uuid import UUID
 from typing import Optional
 
 
@@ -27,15 +26,16 @@ class UserService:
         # Hash password
         password_hash = get_password_hash(user_create.password)
 
-        # Create user
-        user = await self.repository.create(
-            UserCreate(
-                name=user_create.name,
-                email=user_create.email,
-                password=password_hash,
-                role=user_create.role,
-            )
+        # Create user - build User model directly since schema has 'password' but model has 'password_hash'
+        user = User(
+            name=user_create.name,
+            email=user_create.email,
+            password_hash=password_hash,
+            role=user_create.role,
         )
+        self.repository.db.add(user)
+        await self.repository.db.commit()
+        await self.repository.db.refresh(user)
         return UserResponse.model_validate(user)
 
     async def authenticate_user(
@@ -49,6 +49,6 @@ class UserService:
             return None
         return user
 
-    async def get_user(self, user_id: UUID) -> Optional[User]:
+    async def get_user(self, user_id: str) -> Optional[User]:
         """Get a user by ID."""
         return await self.repository.get(user_id)

@@ -3,7 +3,6 @@ from app.repositories.comment_repository import CommentRepository
 from app.schemas.schemas import CommentCreate, CommentUpdate, CommentResponse
 from app.models.models import Comment, UserRole
 from fastapi import HTTPException, status
-from uuid import UUID
 from typing import Optional, List
 
 
@@ -14,17 +13,20 @@ class CommentService:
         self.repository = CommentRepository(db)
 
     async def create_comment(
-        self, comment_create: CommentCreate, task_id: UUID, user_id: UUID
+        self, comment_create: CommentCreate, task_id: str, user_id: str
     ) -> CommentResponse:
         """Create a new comment."""
-        comment = await self.repository.create(comment_create)
-        comment.task_id = task_id
-        comment.created_by = user_id
+        comment = Comment(
+            content=comment_create.content,
+            task_id=str(task_id),
+            created_by=str(user_id),
+        )
+        self.repository.db.add(comment)
         await self.repository.db.commit()
         await self.repository.db.refresh(comment)
         return CommentResponse.model_validate(comment)
 
-    async def get_comment(self, comment_id: UUID, user_id: UUID, user_role: UserRole) -> Optional[Comment]:
+    async def get_comment(self, comment_id: str, user_id: str, user_role: UserRole) -> Optional[Comment]:
         """Get a comment by ID."""
         comment = await self.repository.get(comment_id)
         if not comment:
@@ -38,12 +40,12 @@ class CommentService:
             )
         return comment
 
-    async def get_task_comments(self, task_id: UUID) -> List[Comment]:
-        """Get all comments for a task."""
-        return await self.repository.get_task_comments(task_id)
+    async def get_task_comments(self, task_id: str, skip: int = 0, limit: int = 100):
+        """Get paginated comments for a task. Returns (comments, total)."""
+        return await self.repository.get_task_comments(task_id, skip=skip, limit=limit)
 
     async def update_comment(
-        self, comment_id: UUID, comment_update: CommentUpdate, user_id: UUID, user_role: UserRole
+        self, comment_id: str, comment_update: CommentUpdate, user_id: str, user_role: UserRole
     ) -> CommentResponse:
         """Update a comment."""
         comment = await self.get_comment(comment_id, user_id, user_role)
@@ -63,7 +65,7 @@ class CommentService:
         return CommentResponse.model_validate(comment)
 
     async def delete_comment(
-        self, comment_id: UUID, user_id: UUID, user_role: UserRole
+        self, comment_id: str, user_id: str, user_role: UserRole
     ) -> bool:
         """Delete a comment."""
         comment = await self.get_comment(comment_id, user_id, user_role)

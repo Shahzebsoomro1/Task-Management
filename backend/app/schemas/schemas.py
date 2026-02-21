@@ -1,7 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 from datetime import datetime, date
-from uuid import UUID
 from enum import Enum
 
 
@@ -40,7 +39,7 @@ class UserUpdate(BaseModel):
 
 
 class UserResponse(UserBase):
-    id: UUID
+    id: str
     created_at: datetime
 
     class Config:
@@ -63,8 +62,8 @@ class ProjectUpdate(BaseModel):
 
 
 class ProjectResponse(ProjectBase):
-    id: UUID
-    created_by: UUID
+    id: str
+    created_by: str
     created_at: datetime
 
     class Config:
@@ -82,7 +81,7 @@ class TaskBase(BaseModel):
     status: TaskStatusEnum = TaskStatusEnum.todo
     priority: TaskPriorityEnum = TaskPriorityEnum.medium
     due_date: Optional[date] = None
-    assigned_to: Optional[UUID] = None
+    assigned_to: Optional[str] = None
 
 
 class TaskCreate(BaseModel):
@@ -90,7 +89,7 @@ class TaskCreate(BaseModel):
     description: Optional[str] = Field(None, max_length=2000)
     priority: TaskPriorityEnum = TaskPriorityEnum.medium
     due_date: Optional[date] = None
-    assigned_to: Optional[UUID] = None
+    assigned_to: Optional[str] = None
 
 
 class TaskUpdate(BaseModel):
@@ -99,13 +98,13 @@ class TaskUpdate(BaseModel):
     status: Optional[TaskStatusEnum] = None
     priority: Optional[TaskPriorityEnum] = None
     due_date: Optional[date] = None
-    assigned_to: Optional[UUID] = None
+    assigned_to: Optional[str] = None
 
 
 class TaskResponse(TaskBase):
-    id: UUID
-    project_id: UUID
-    created_by: UUID
+    id: str
+    project_id: str
+    created_by: str
     created_at: datetime
 
     class Config:
@@ -130,9 +129,9 @@ class CommentUpdate(BaseModel):
 
 
 class CommentResponse(CommentBase):
-    id: UUID
-    task_id: UUID
-    created_by: UUID
+    id: str
+    task_id: str
+    created_by: str
     created_at: datetime
 
     class Config:
@@ -161,7 +160,7 @@ class PaginationParams(BaseModel):
 class TaskFilterParams(BaseModel):
     status: Optional[TaskStatusEnum] = None
     priority: Optional[TaskPriorityEnum] = None
-    project_id: Optional[UUID] = None
-    assigned_to: Optional[UUID] = None
+    project_id: Optional[str] = None
+    assigned_to: Optional[str] = None
     order_by: Optional[str] = Field(None, pattern="^(due_date|priority|created_at)$")
     order_desc: bool = False

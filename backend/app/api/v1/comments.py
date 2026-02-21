@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from uuid import UUID
 from app.core.config import get_db
 from app.core.security import get_current_user, TokenData
 from app.schemas.schemas import CommentCreate, CommentUpdate, CommentResponse
@@ -28,7 +27,7 @@ async def get_current_user_model(
 
 @router.post("", response_model=CommentResponse, status_code=status.HTTP_201_CREATED)
 async def create_comment(
-    task_id: UUID,
+    task_id: str,
     comment_create: CommentCreate,
     current_user: User = Depends(get_current_user_model),
     db: AsyncSession = Depends(get_db),
@@ -38,21 +37,29 @@ async def create_comment(
     return await service.create_comment(comment_create, task_id, current_user.id)
 
 
-@router.get("", response_model=List[CommentResponse])
+@router.get("", response_model=dict)
 async def get_comments(
-    task_id: UUID,
+    task_id: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
     current_user: User = Depends(get_current_user_model),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get all comments for a task."""
+    """Get all comments for a task with pagination."""
     service = CommentService(db)
-    return await service.get_task_comments(task_id)
+    comments, total = await service.get_task_comments(task_id, skip=skip, limit=limit)
+    return {
+        "items": [CommentResponse.model_validate(c) for c in comments],
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+    }
 
 
 @router.put("/{comment_id}", response_model=CommentResponse)
 async def update_comment(
-    task_id: UUID,
-    comment_id: UUID,
+    task_id: str,
+    comment_id: str,
     comment_update: CommentUpdate,
     current_user: User = Depends(get_current_user_model),
     db: AsyncSession = Depends(get_db),
@@ -66,8 +73,8 @@ async def update_comment(
 
 @router.delete("/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_comment(
-    task_id: UUID,
-    comment_id: UUID,
+    task_id: str,
+    comment_id: str,
     current_user: User = Depends(get_current_user_model),
     db: AsyncSession = Depends(get_db),
 ):

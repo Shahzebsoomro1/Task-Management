@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from uuid import UUID
 from app.core.config import get_db
 from app.core.security import get_current_user, TokenData
 from app.schemas.schemas import TaskCreate, TaskUpdate, TaskResponse, TaskWithComments, TaskStatusEnum
@@ -28,7 +27,7 @@ async def get_current_user_model(
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 async def create_task(
-    project_id: UUID,
+    project_id: str,
     task_create: TaskCreate,
     current_user: User = Depends(get_current_user_model),
     db: AsyncSession = Depends(get_db),
@@ -40,9 +39,9 @@ async def create_task(
 
 @router.get("", response_model=dict)
 async def get_tasks(
-    project_id: UUID,
+    project_id: str,
     status: Optional[TaskStatusEnum] = Query(None),
-    assigned_to: Optional[UUID] = Query(None),
+    assigned_to: Optional[str] = Query(None),
     order_by: Optional[str] = Query(None),
     order_desc: bool = Query(False),
     skip: int = Query(0, ge=0),
@@ -73,8 +72,8 @@ async def get_tasks(
 
 @router.get("/{task_id}", response_model=TaskWithComments)
 async def get_task(
-    project_id: UUID,
-    task_id: UUID,
+    project_id: str,
+    task_id: str,
     current_user: User = Depends(get_current_user_model),
     db: AsyncSession = Depends(get_db),
 ):
@@ -90,8 +89,8 @@ async def get_task(
 
 @router.put("/{task_id}", response_model=TaskResponse)
 async def update_task(
-    project_id: UUID,
-    task_id: UUID,
+    project_id: str,
+    task_id: str,
     task_update: TaskUpdate,
     current_user: User = Depends(get_current_user_model),
     db: AsyncSession = Depends(get_db),
@@ -103,8 +102,8 @@ async def update_task(
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(
-    project_id: UUID,
-    task_id: UUID,
+    project_id: str,
+    task_id: str,
     current_user: User = Depends(get_current_user_model),
     db: AsyncSession = Depends(get_db),
 ):
