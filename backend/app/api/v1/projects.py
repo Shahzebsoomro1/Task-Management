@@ -20,7 +20,7 @@ async def get_current_user_model(
     user = await service.get_user(current_user.user_id)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or session expired"
         )
     return user
 
@@ -45,7 +45,7 @@ async def get_projects(
 ):
     """Get all projects for current user with pagination."""
     service = ProjectService(db)
-    projects, total = await service.get_user_projects(current_user.id, skip=skip, limit=limit)
+    projects, total = await service.get_user_projects(current_user.id, skip=skip, limit=limit, user_role=current_user.role)
     return {
         "items": [ProjectResponse.model_validate(p) for p in projects],
         "total": total,

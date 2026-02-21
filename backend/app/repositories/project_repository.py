@@ -23,21 +23,33 @@ class ProjectRepository(BaseRepository[Project]):
         return result.scalar_one_or_none()
 
     async def get_user_projects(
-        self, user_id: any, skip: int = 0, limit: int = 100
+        self, user_id: any, skip: int = 0, limit: int = 100, is_admin: bool = False
     ) -> Tuple[List[Project], int]:
-        """Get paginated projects created by a user."""
-        base_where = self.model.created_by == user_id
+        """Get paginated projects. Admins see all; regular users see only their own."""
+        if is_admin:
+            count_stmt = select(func.count()).select_from(self.model)
+            count_result = await self.db.execute(count_stmt)
+            total = count_result.scalar_one()
 
-        count_stmt = select(func.count()).select_from(self.model).where(base_where)
-        count_result = await self.db.execute(count_stmt)
-        total = count_result.scalar_one()
+            statement = (
+                select(self.model)
+                .offset(skip)
+                .limit(limit)
+            )
+        else:
+            base_where = self.model.created_by == user_id
 
-        statement = (
-            select(self.model)
-            .where(base_where)
-            .offset(skip)
-            .limit(limit)
-        )
+            count_stmt = select(func.count()).select_from(self.model).where(base_where)
+            count_result = await self.db.execute(count_stmt)
+            total = count_result.scalar_one()
+
+            statement = (
+                select(self.model)
+                .where(base_where)
+                .offset(skip)
+                .limit(limit)
+            )
+
         result = await self.db.execute(statement)
         projects = list(result.scalars().all())
         return projects, total

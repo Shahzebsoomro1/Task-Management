@@ -41,10 +41,11 @@ class ProjectService:
         return project
 
     async def get_user_projects(
-        self, user_id: str, skip: int = 0, limit: int = 100
+        self, user_id: str, skip: int = 0, limit: int = 100, user_role: UserRole = UserRole.user
     ):
-        """Get paginated projects for a user. Returns (projects, total)."""
-        return await self.repository.get_user_projects(user_id, skip=skip, limit=limit)
+        """Get paginated projects. Admins see all; regular users see only their own."""
+        is_admin = user_role == UserRole.admin
+        return await self.repository.get_user_projects(user_id, skip=skip, limit=limit, is_admin=is_admin)
 
     async def update_project(
         self, project_id: str, project_update: ProjectUpdate, user_id: str, user_role: UserRole

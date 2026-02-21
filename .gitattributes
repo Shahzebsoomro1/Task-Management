@@ -1,0 +1,35 @@
+# Git attributes for preventing conflicts and proper handling
+
+# Prevent line ending conflicts on Windows/Unix
+* text=auto
+
+# Scripts should always have LF
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Windows batch files should have CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Docker files
+Dockerfile text eol=lf
+docker-compose.yml text eol=lf
+
+# Code files
+*.py text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.tar binary
+*.gz binary
